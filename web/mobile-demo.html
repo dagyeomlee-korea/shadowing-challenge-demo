@@ -1,0 +1,129 @@
+<!doctype html>
+<html lang="ko">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>쉐도잉 챌린지 모바일 데모</title>
+  <link rel="stylesheet" href="/web/mobile-demo.css">
+</head>
+<body>
+  <main class="demo-shell">
+    <section class="phone" aria-label="모바일 앱 데모">
+      <div class="phone-top">
+        <span>9:41</span>
+        <span class="signal">●●●</span>
+      </div>
+
+      <section class="screen active" data-step="0">
+        <div class="app-title">
+          <span>쉐도잉 챌린지</span>
+          <strong>오늘 뭐 따라할래?</strong>
+        </div>
+        <div class="hero-card">
+          <img src="/api/image/nicholas-lv1" alt="">
+          <div class="hero-copy">
+            <span class="eyebrow">추천 챌린지</span>
+            <p>니콜라스 Lv.1</p>
+          </div>
+        </div>
+        <div class="quote-card">
+          <span>Ni bu ke ai shei ke ai <small>(你不可爱 谁可爱)</small></span>
+          <em>난이도 하</em>
+        </div>
+        <div class="mini-challenges">
+          <div><img src="/api/image/wonyoung-lv1" alt=""><span>장원영</span><b>Lv.1</b></div>
+          <div><img src="/api/image/minami-lv1" alt=""><span>미나미</span><b>Lv.1</b></div>
+          <div><img src="/api/image/isuji-lv1" alt=""><span>이수지 실장</span><b>Lv.1</b></div>
+        </div>
+        <button class="primary next">시작하기</button>
+      </section>
+
+      <section class="screen" data-step="1">
+        <header class="mini-head">
+          <img src="/api/image/nicholas-lv1" alt="">
+          <div>
+            <strong>니콜라스 Lv.1</strong>
+            <span>Ni bu ke ai...</span>
+          </div>
+        </header>
+        <button class="listen-card reveal-feedback" type="button">
+          <span class="pulse"></span>
+          <div>
+            <strong>원본 듣기</strong>
+            <p>먼저 원본 억양을 들어보세요</p>
+          </div>
+        </button>
+        <div class="reference-preview hidden">
+          <div class="graph-label"><b>원본 그래프</b><span>Pitch / Intensity</span></div>
+          <div class="graph graph-ref">
+            <span class="line blue"></span>
+            <span class="line yellow"></span>
+            <i class="dot d1"></i><i class="dot d2"></i><i class="dot d3"></i>
+          </div>
+        </div>
+        <div class="red-points hidden">
+          <div><i></i> “Ni”에서 pitch를 선명하게 시작</div>
+          <div><i></i> “ke ai”는 intensity를 살리기</div>
+          <div><i></i> 끝음은 너무 끌지 않고 짧게</div>
+        </div>
+        <button class="primary next hidden">알겠어요, 녹음해볼게요</button>
+      </section>
+
+      <section class="screen" data-step="2">
+        <div class="graph-title">
+          <span>말이 그래프로 보이는 순간</span>
+          <strong>72</strong>
+        </div>
+        <div class="graph-panel">
+          <div class="graph-label"><b>원본</b><span>Pitch / Intensity</span></div>
+          <div class="graph graph-ref">
+            <span class="line blue"></span>
+            <span class="line yellow"></span>
+            <i class="dot d1"></i><i class="dot d2"></i><i class="dot d3"></i>
+          </div>
+          <div class="subtitle">Ni bu ke ai...</div>
+          <div class="graph-label"><b>내 음성</b><span>Pitch / Intensity</span></div>
+          <div class="graph graph-user">
+            <span class="line red"></span>
+            <span class="line yellow y2"></span>
+          </div>
+        </div>
+        <div class="score-grid">
+          <div><span>Pitch</span><b>68</b></div>
+          <div><span>Duration</span><b>84</b></div>
+          <div><span>Intensity</span><b>77</b></div>
+          <div><span>Pronunciation</span><b>81</b></div>
+        </div>
+        <button class="primary next">결과 공유</button>
+      </section>
+
+      <section class="screen" data-step="3">
+        <div class="photo-card">
+          <img src="/api/image/nicholas-lv1" alt="">
+          <div class="shade"></div>
+          <div class="card-text">
+            <span>니콜라스 Lv.1</span>
+            <strong>72점</strong>
+            <p>Ni bu ke ai...</p>
+            <em>#쉐도잉챌린지</em>
+          </div>
+        </div>
+        <div class="share-row">
+          <button>X</button>
+          <button>인스타그램</button>
+          <button>이미지로 저장</button>
+        </div>
+        <button class="ghost restart">다른 대사 도전</button>
+      </section>
+
+      <nav class="step-dots" aria-label="데모 단계">
+        <button class="active" type="button" data-go="0"></button>
+        <button type="button" data-go="1"></button>
+        <button type="button" data-go="2"></button>
+        <button type="button" data-go="3"></button>
+      </nav>
+    </section>
+  </main>
+  <script src="/web/mobile-demo.js"></script>
+</body>
+</html>

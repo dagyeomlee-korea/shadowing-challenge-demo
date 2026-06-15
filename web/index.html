@@ -1,0 +1,115 @@
+<!doctype html>
+<html lang="ko">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>쉐도잉 챌린지</title>
+  <link rel="stylesheet" href="/web/styles.css">
+</head>
+<body>
+  <main class="app">
+    <header class="topbar">
+      <div>
+        <h1>쉐도잉 챌린지</h1>
+        <p id="status">챌린지를 선택하세요</p>
+      </div>
+      <div class="score" id="scoreBox">
+        <span id="scoreValue">-</span>
+        <small>score</small>
+      </div>
+    </header>
+
+    <section id="characterScreen" class="character-screen">
+      <div id="characterList" class="character-list"></div>
+    </section>
+
+    <section id="practiceScreen" class="layout hidden">
+      <aside class="challenge-panel">
+        <button id="backBtn" class="back-btn" type="button">← 이전 화면</button>
+        <h2>Challenge</h2>
+        <div id="challengeList" class="challenge-list"></div>
+        <div id="feedbackPanel" class="feedback-panel hidden">
+          <h3>피드백</h3>
+          <ul id="feedbackList"></ul>
+        </div>
+      </aside>
+
+      <section class="practice">
+        <div class="hero">
+          <img id="faceImage" alt="" src="">
+          <div>
+            <div id="characterName" class="character">-</div>
+            <div id="phraseTitle" class="phrase">-</div>
+            <div id="nativeTitle" class="native"></div>
+          </div>
+        </div>
+
+        <div class="controls">
+          <audio id="referenceAudio"></audio>
+          <button id="playRefBtn" type="button">▶ 원본 듣기</button>
+          <button id="recordBtn" type="button">🎤 녹음 시작</button>
+          <div class="inline-score">점수: <strong id="inlineScoreValue">-</strong></div>
+        </div>
+        <div id="recordStatus" class="record-status"></div>
+        <div class="graph-wrap">
+          <div class="graph-head">
+            <span>📊 원본 음성</span>
+            <span class="legend"><i class="blue"></i>Pitch <i class="yellow"></i>Intensity</span>
+          </div>
+          <canvas id="refGraph" width="900" height="180"></canvas>
+          <div id="subtitleBar" class="subtitle-bar"></div>
+          <div class="graph-head">
+            <span>🎤 내 음성</span>
+            <span class="legend"><i class="red"></i>Pitch <i class="yellow"></i>Intensity</span>
+          </div>
+          <canvas id="userGraph" width="900" height="180"></canvas>
+        </div>
+
+        <div class="meters">
+          <div class="metric pitch"><span>Pitch</span><strong id="pitchScore">-</strong></div>
+          <div class="metric duration"><span>Duration</span><strong id="durationScore">-</strong></div>
+          <div class="metric intensity"><span>Intensity</span><strong id="intensityScore">-</strong></div>
+          <div class="metric pronunciation"><span>Pronunciation</span><strong id="pronunciationScore">-</strong></div>
+          <div class="metric total"><span>Score</span><strong id="resultScoreValue">-</strong></div>
+        </div>
+      </section>
+    </section>
+
+    <div id="feedbackModal" class="modal hidden">
+      <div class="modal-card">
+        <button id="closeFeedbackBtn" class="modal-close" type="button">×</button>
+        <h2 id="feedbackModalTitle">피드백</h2>
+        <ul id="modalFeedbackList"></ul>
+        <button id="startRecordingFromFeedbackBtn" class="modal-action" type="button">알겠어요, 녹음해볼게요</button>
+        <button id="showPhotoCardBtn" class="modal-action" type="button">포토카드 확인</button>
+      </div>
+    </div>
+
+    <div id="photoCardModal" class="modal hidden">
+      <div class="photo-modal-card">
+        <button id="closePhotoCardBtn" class="modal-close" type="button">×</button>
+        <div id="photoCard" class="photo-card">
+          <div id="photoCardFront" class="photo-card-face front">
+            <img id="cardImage" alt="">
+            <div class="card-shade"></div>
+            <div class="card-content">
+              <div id="cardCharacter" class="card-character"></div>
+              <div id="cardPhrase" class="card-phrase"></div>
+              <div class="card-score-row">
+                <span id="cardScore" class="card-score">-</span>
+              </div>
+              <div class="card-tag">#쉐도잉챌린지</div>
+            </div>
+          </div>
+        </div>
+        <div class="share-actions">
+          <button id="saveCardBtn" type="button">이미지로 저장</button>
+          <button id="shareXBtn" type="button">X</button>
+          <button id="shareInstagramBtn" type="button">인스타그램</button>
+        </div>
+      </div>
+    </div>
+  </main>
+  <script src="/web/app.js"></script>
+</body>
+</html>
