@@ -4,7 +4,7 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>쉐도잉 챌린지</title>
-  <link rel="stylesheet" href="/web/styles.css">
+  <link rel="stylesheet" href="/web/styles.css?v=ux12">
 </head>
 <body>
   <main class="app">
@@ -15,12 +15,53 @@
       </div>
       <div class="score" id="scoreBox">
         <span id="scoreValue">-</span>
-        <small>score</small>
+        <small id="scoreLabel">머니</small>
       </div>
     </header>
 
     <section id="characterScreen" class="character-screen">
+      <div class="home-panel package-panel top-package-panel">
+        <div class="section-head">
+          <div>
+            <span class="eyebrow">High Reward</span>
+            <h2>패키지 챌린지</h2>
+          </div>
+        </div>
+        <div id="bundleList" class="bundle-list"></div>
+      </div>
+
+      <div class="section-head character-head">
+        <div>
+          <span class="eyebrow">Solo Play</span>
+          <h2>캐릭터 챌린지</h2>
+        </div>
+      </div>
       <div id="characterList" class="character-list"></div>
+
+      <section class="home-grid">
+        <div class="home-panel avatar-panel">
+          <div class="section-head">
+            <div>
+              <span class="eyebrow">My Character</span>
+              <h2>내 캐릭터</h2>
+            </div>
+            <div class="money-pill"><span id="moneyValue">0</span> 머니</div>
+          </div>
+          <div class="avatar-shop">
+            <div id="avatarPreview" class="avatar-preview">
+              <div class="avatar-bg"></div>
+              <div class="avatar-person" aria-hidden="true">
+                <div class="avatar-head"></div>
+                <div class="avatar-torso"></div>
+                <div class="avatar-leg left"></div>
+                <div class="avatar-leg right"></div>
+              </div>
+              <div id="equippedLabel" class="equipped-label">기본 캐릭터</div>
+            </div>
+            <div id="shopList" class="shop-list"></div>
+          </div>
+        </div>
+      </section>
     </section>
 
     <section id="practiceScreen" class="layout hidden">
@@ -54,13 +95,13 @@
         <div class="graph-wrap">
           <div class="graph-head">
             <span>📊 원본 음성</span>
-            <span class="legend"><i class="blue"></i>Pitch <i class="yellow"></i>Intensity</span>
+            <span class="legend"><i class="blue"></i><span class="pitch-text blue-text">Pitch</span> <i class="yellow"></i><span class="intensity-text">Intensity</span></span>
           </div>
           <canvas id="refGraph" width="900" height="180"></canvas>
           <div id="subtitleBar" class="subtitle-bar"></div>
           <div class="graph-head">
             <span>🎤 내 음성</span>
-            <span class="legend"><i class="red"></i>Pitch <i class="yellow"></i>Intensity</span>
+            <span class="legend"><i class="red"></i><span class="pitch-text red-text">Pitch</span> <i class="yellow"></i><span class="intensity-text">Intensity</span></span>
           </div>
           <canvas id="userGraph" width="900" height="180"></canvas>
         </div>
@@ -110,6 +151,6 @@
       </div>
     </div>
   </main>
-  <script src="/web/app.js"></script>
+  <script src="/web/app.js?v=ux12"></script>
 </body>
 </html>

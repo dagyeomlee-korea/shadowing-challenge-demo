@@ -1,1 +1,7 @@
-[{"word": "마떼루요", "start": 0.0, "end": 2.0}]
+[
+  {"word": "itsudemo", "start": 0.0, "end": 0.62},
+  {"word": "yahho", "start": 0.62, "end": 1.22},
+  {"word": "tte", "start": 1.22, "end": 1.5},
+  {"word": "itterun desu", "start": 1.5, "end": 2.28},
+  {"word": "ka", "start": 2.28, "end": 2.59}
+]

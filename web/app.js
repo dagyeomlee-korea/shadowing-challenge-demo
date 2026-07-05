@@ -1,5 +1,12 @@
 const state = {
   challenges: [],
+  bundles: [],
+  shopItems: [],
+  user: {
+    money: 0,
+    ownedItems: [],
+    equipped: {},
+  },
   selected: null,
   audioContext: null,
   stream: null,
@@ -29,10 +36,17 @@ const state = {
   resultFeedbackItems: [],
 };
 
+const USER_STATE_KEY = "shadowingUserStateV2";
+
 const els = {
   status: document.getElementById("status"),
   characterScreen: document.getElementById("characterScreen"),
   practiceScreen: document.getElementById("practiceScreen"),
+  bundleList: document.getElementById("bundleList"),
+  moneyValue: document.getElementById("moneyValue"),
+  shopList: document.getElementById("shopList"),
+  avatarPreview: document.getElementById("avatarPreview"),
+  equippedLabel: document.getElementById("equippedLabel"),
   characterList: document.getElementById("characterList"),
   challengeList: document.getElementById("challengeList"),
   backBtn: document.getElementById("backBtn"),
@@ -44,6 +58,7 @@ const els = {
   playRefBtn: document.getElementById("playRefBtn"),
   recordBtn: document.getElementById("recordBtn"),
   scoreValue: document.getElementById("scoreValue"),
+  scoreLabel: document.getElementById("scoreLabel"),
   inlineScoreValue: document.getElementById("inlineScoreValue"),
   recordStatus: document.getElementById("recordStatus"),
   subtitleBar: document.getElementById("subtitleBar"),
@@ -82,11 +97,136 @@ const els = {
 };
 
 async function loadChallenges() {
-  const res = await fetch("/api/challenges");
-  const data = await res.json();
-  state.challenges = data.challenges.filter((item) => item.ready);
+  const [challengeRes, bundleRes, customizationRes] = await Promise.all([
+    fetch("/api/challenges"),
+    fetch("/api/bundles"),
+    fetch("/api/customization"),
+  ]);
+  const data = await challengeRes.json();
+  const bundleData = await bundleRes.json();
+  const customizationData = await customizationRes.json();
+  state.challenges = data.challenges || [];
+  state.bundles = bundleData.bundles || [];
+  state.shopItems = customizationData.items || [];
+  loadUserState(customizationData.starting_money || 0);
+  renderBundles();
+  renderShop();
   renderCharacters();
+  showMoneyInTopbar();
   els.status.textContent = "캐릭터를 선택하세요";
+}
+
+function loadUserState(startingMoney) {
+  try {
+    const saved = JSON.parse(localStorage.getItem(USER_STATE_KEY) || "null");
+    if (saved) {
+      state.user = {
+        money: Number(saved.money) || 0,
+        ownedItems: Array.isArray(saved.ownedItems) ? saved.ownedItems : [],
+        equipped: saved.equipped || {},
+      };
+      return;
+    }
+  } catch (error) {
+    localStorage.removeItem(USER_STATE_KEY);
+  }
+  state.user = {
+    money: startingMoney,
+    ownedItems: [],
+    equipped: {},
+  };
+  saveUserState();
+}
+
+function saveUserState() {
+  localStorage.setItem(USER_STATE_KEY, JSON.stringify(state.user));
+}
+
+function renderBundles() {
+  if (!els.bundleList) return;
+  els.bundleList.innerHTML = "";
+  for (const bundle of state.bundles) {
+    const card = document.createElement("article");
+    card.className = `bundle-card${bundle.ready ? "" : " disabled"}`;
+    const itemText = bundle.items
+      .map((item) => `${item.ready ? "" : "준비중 · "}${item.character}`)
+      .join(" / ");
+    card.innerHTML = `
+      <div>
+        <strong>${escapeHtml(bundle.title)}</strong>
+        <span>${escapeHtml(bundle.subtitle)}</span>
+        <small>${escapeHtml(itemText)}</small>
+      </div>
+      <div class="bundle-reward">
+        <b>${bundle.reward_money}</b>
+        <em>${bundle.ready ? "보상" : "준비중"}</em>
+      </div>
+      <div class="bundle-action">${bundle.ready ? "시작하기" : "영어 인터뷰 추가 필요"}</div>
+    `;
+    els.bundleList.appendChild(card);
+  }
+}
+
+function renderShop() {
+  if (!els.shopList) return;
+  els.moneyValue.textContent = state.user.money;
+  if (!state.selected) {
+    showMoneyInTopbar();
+  }
+  const equippedItem = state.shopItems.find((item) => state.user.equipped[item.slot] === item.id);
+  els.equippedLabel.textContent = equippedItem ? `${equippedItem.name} 장착중` : "기본 캐릭터";
+  els.avatarPreview.dataset.outfit = state.user.equipped.outfit || "";
+  els.avatarPreview.dataset.background = state.user.equipped.background || "";
+  els.shopList.innerHTML = "";
+
+  for (const item of state.shopItems) {
+    const owned = state.user.ownedItems.includes(item.id);
+    const equipped = state.user.equipped[item.slot] === item.id;
+    const button = document.createElement("button");
+    button.type = "button";
+    button.className = "shop-item";
+    button.dataset.id = item.id;
+    button.innerHTML = `
+      <span class="item-preview">${escapeHtml(item.preview)}</span>
+      <span>
+        <strong>${escapeHtml(item.name)}</strong>
+        <small>${owned ? (equipped ? "장착중" : "보유") : `${item.price} 머니`}</small>
+      </span>
+    `;
+    button.addEventListener("click", () => buyOrEquipItem(item));
+    els.shopList.appendChild(button);
+  }
+}
+
+function buyOrEquipItem(item) {
+  const owned = state.user.ownedItems.includes(item.id);
+  if (!owned) {
+    if (state.user.money < item.price) {
+      els.status.textContent = "머니가 부족합니다";
+      return;
+    }
+    state.user.money -= item.price;
+    state.user.ownedItems.push(item.id);
+  }
+  state.user.equipped[item.slot] = item.id;
+  saveUserState();
+  renderShop();
+  showMoneyInTopbar();
+  els.status.textContent = `${item.name} 장착 완료`;
+}
+
+function showMoneyInTopbar() {
+  els.scoreValue.textContent = state.user.money;
+  if (els.scoreLabel) {
+    els.scoreLabel.textContent = "머니";
+  }
+}
+
+function showScoreInTopbar(value = "-") {
+  els.scoreValue.textContent = value;
+  if (els.scoreLabel) {
+    els.scoreLabel.textContent = "score";
+  }
 }
 
 function groupedCharacters() {
@@ -112,13 +252,22 @@ function renderCharacters() {
     button.type = "button";
     button.className = "character-card";
     button.innerHTML = `
-      <img src="/api/image/${first.id}" alt="">
-      <div>
+      <div class="character-image-wrap">
+        <img src="/api/image/${first.id}" alt="">
+      </div>
+      <div class="character-card-copy">
         <strong>${escapeHtml(character)}</strong>
-        <span>${challenges.length}개 챌린지</span>
+        <span>${first.ready ? `Lv.1-${challenges.length}` : "준비중"}</span>
       </div>
     `;
-    button.addEventListener("click", () => showPracticeScreen(character));
+    button.classList.toggle("disabled", !challenges.some((challenge) => challenge.ready));
+    button.addEventListener("click", () => {
+      if (!challenges.some((challenge) => challenge.ready)) {
+        els.status.textContent = `${character} 챌린지는 사진, 숏츠 구간, 음성 파일이 필요합니다`;
+        return;
+      }
+      showPracticeScreen(character);
+    });
     els.characterList.appendChild(button);
   }
 }
@@ -128,6 +277,7 @@ function showPracticeScreen(character) {
   els.characterScreen.classList.add("hidden");
   els.practiceScreen.classList.remove("hidden");
   els.status.textContent = "챌린지를 선택하세요";
+  showScoreInTopbar("-");
   renderChallenges(character);
 }
 
@@ -141,12 +291,13 @@ function showCharacterScreen() {
   els.characterScreen.classList.remove("hidden");
   els.practiceScreen.classList.add("hidden");
   els.status.textContent = "캐릭터를 선택하세요";
+  showMoneyInTopbar();
 }
 
 function renderChallenges(character) {
   els.challengeList.innerHTML = "";
   const challenges = state.challenges
-    .filter((item) => item.character === character)
+    .filter((item) => item.character === character && item.ready)
     .sort((a, b) => a.level - b.level);
 
   for (const challenge of challenges) {
@@ -175,7 +326,7 @@ function selectChallenge(id) {
   state.referenceProfilePromise = null;
   state.referenceFeedbackScheduled = false;
   state.resultFeedbackItems = [];
-  els.scoreValue.textContent = "-";
+  showScoreInTopbar("-");
   els.inlineScoreValue.textContent = "-";
   resetMetricScore(els.resultScoreValue);
   resetMetricScore(els.pitchScore);
@@ -202,7 +353,7 @@ function selectChallenge(id) {
   els.characterName.textContent = `${state.selected.character} Lv.${state.selected.level}`;
   els.phraseTitle.textContent = state.selected.title;
   els.nativeTitle.textContent = state.selected.native_title || "";
-  els.referenceAudio.src = `/api/reference/${id}`;
+  els.referenceAudio.src = `/api/reference/${id}?v=${Date.now()}`;
   clearCanvas(els.refGraph);
   clearCanvas(els.userGraph);
   state.referenceProfilePromise = loadReferenceProfile(id);
@@ -499,7 +650,7 @@ async function analyzeRecording() {
   form.append("file", state.recordedBlob, "recording.wav");
 
   try {
-    const res = await fetch("/api/analyze", { method: "POST", body: form });
+    const res = await fetch("/api/analyze?fast=1", { method: "POST", body: form });
     const data = await res.json();
     if (!res.ok) {
       throw new Error(data.detail || "analysis failed");
@@ -513,7 +664,7 @@ async function analyzeRecording() {
 }
 
 function renderResult(data) {
-  els.scoreValue.textContent = data.score;
+  showScoreInTopbar(data.score);
   els.inlineScoreValue.textContent = data.score;
   setMetricScore(els.resultScoreValue, data.score);
   setMetricScore(els.pitchScore, data.details.pitch);
@@ -686,7 +837,7 @@ function scheduleFeedbackModal() {
   state.feedbackDelayTimer = window.setTimeout(() => {
     state.feedbackDelayTimer = null;
     showFeedbackModal("피드백", state.resultFeedbackItems, "photo");
-  }, 5000);
+  }, 700);
 }
 
 function scheduleReferenceFeedbackModal() {
@@ -705,9 +856,15 @@ function updatePhotoCard(data) {
   els.cardImage.src = `/api/image/${challenge.id}`;
   els.cardCharacter.textContent = `${challenge.character} Lv.${challenge.level}`;
   els.cardPhrase.textContent = challenge.title;
+  const tier = photoCardTier(score);
+  els.photoCard.dataset.tier = tier.id;
   els.cardScore.textContent = `${score}`;
   if (els.cardGrade) {
-    els.cardGrade.textContent = "";
+    els.cardGrade.textContent = tier.label;
+  }
+  const cardTag = els.photoCard.querySelector(".card-tag");
+  if (cardTag) {
+    cardTag.textContent = tier.label;
   }
   if (els.cardFeedbackList) {
     els.cardFeedbackList.innerHTML = "";
@@ -753,6 +910,17 @@ function scoreGrade(score) {
   if (score >= 55) return "C";
   if (score >= 40) return "D";
   return "RE";
+}
+
+function photoCardTier(score) {
+  const value = Number(score) || 0;
+  if (value >= 80) {
+    return { id: "motion", label: "MOTION PHOTO CARD" };
+  }
+  if (value >= 50) {
+    return { id: "rare", label: "SPECIAL PHOTO CARD" };
+  }
+  return { id: "basic", label: "BASIC PHOTO CARD" };
 }
 
 function openPhotoCard() {
@@ -955,7 +1123,7 @@ function getSeriesMaxTime(data) {
 }
 
 function drawGrid(ctx, width, height) {
-  ctx.strokeStyle = "rgba(240, 246, 252, 0.12)";
+  ctx.strokeStyle = "rgba(124, 92, 255, 0.14)";
   ctx.lineWidth = 1;
   for (let x = 0; x <= width; x += width / 8) {
     ctx.beginPath();

@@ -6,7 +6,7 @@ import numpy as np
 import soundfile as sf
 from fastapi import FastAPI, File, Form, HTTPException, UploadFile
 from fastapi.middleware.cors import CORSMiddleware
-from fastapi.responses import FileResponse
+from fastapi.responses import FileResponse, Response
 from fastapi.staticfiles import StaticFiles
 
 from analysis import (
@@ -21,7 +21,13 @@ from analysis import (
     get_reference_transcript,
     transcribe_audio_segment,
 )
-from challenge_data import CHALLENGES, public_challenge
+from challenge_data import (
+    BUNDLE_CHALLENGES,
+    CHALLENGES,
+    CUSTOMIZATION_ITEMS,
+    public_bundle,
+    public_challenge,
+)
 
 
 app = FastAPI(title="Shadowing Challenge API")
@@ -45,6 +51,13 @@ def require_challenge(challenge_id):
         raise HTTPException(status_code=404, detail="challenge not found")
     if not os.path.exists(challenge["audio"]) or not os.path.exists(challenge["words"]):
         raise HTTPException(status_code=404, detail="challenge assets are missing")
+    return challenge
+
+
+def optional_challenge(challenge_id):
+    challenge = CHALLENGES.get(challenge_id)
+    if not challenge:
+        raise HTTPException(status_code=404, detail="challenge not found")
     return challenge
 
 
@@ -126,7 +139,7 @@ def reference_feedback_points(times, pitch, int_times, intensity, words):
     return points
 
 
-def analyze_audio_file(challenge, upload_path):
+def analyze_audio_file(challenge, upload_path, fast=True):
     words = load_words(challenge["words"])
     ref_times, ref_pitch = get_pitch(challenge["audio"])
     ref_intensity_times, ref_intensity = get_intensity(challenge["audio"])
@@ -152,7 +165,9 @@ def analyze_audio_file(challenge, upload_path):
     transcript = ""
     asr_error = None
     content_score = None
-    if usr_duration > 0:
+    if fast:
+        asr_error = "fast mode: pronunciation analysis skipped"
+    elif usr_duration > 0:
         transcript, asr_error = transcribe_audio_segment(
             recorded_audio, samplerate, usr_start, usr_end, challenge.get("language"))
         if asr_error is None:
@@ -245,16 +260,51 @@ def challenges():
     }
 
 
+@app.get("/api/bundles")
+def bundles():
+    return {
+        "bundles": [
+            public_bundle(bundle)
+            for bundle in BUNDLE_CHALLENGES.values()
+        ]
+    }
+
+
+@app.get("/api/customization")
+def customization():
+    return {
+        "starting_money": 300,
+        "items": CUSTOMIZATION_ITEMS,
+    }
+
+
 @app.get("/api/reference/{challenge_id}")
 def reference_audio(challenge_id: str):
     challenge = require_challenge(challenge_id)
-    return FileResponse(challenge["audio"], media_type="audio/wav")
+    return FileResponse(
+        challenge["audio"],
+        media_type="audio/wav",
+        headers={"Cache-Control": "no-store"},
+    )
 
 
 @app.get("/api/image/{challenge_id}")
 def challenge_image(challenge_id: str):
-    challenge = require_challenge(challenge_id)
-    return FileResponse(challenge["image"])
+    challenge = optional_challenge(challenge_id)
+    image_path = challenge.get("image")
+    if image_path and os.path.exists(image_path):
+        return FileResponse(image_path)
+
+    name = challenge.get("character", "EN")
+    initials = "".join(part[:1] for part in str(name).split())[:2] or "EN"
+    svg = f"""<svg xmlns="http://www.w3.org/2000/svg" width="640" height="640" viewBox="0 0 640 640">
+  <rect width="640" height="640" fill="#f7f1ff"/>
+  <circle cx="320" cy="250" r="104" fill="#d8c7ff"/>
+  <rect x="188" y="382" width="264" height="162" rx="58" fill="#b69cff"/>
+  <text x="320" y="272" text-anchor="middle" font-family="Arial, sans-serif" font-size="76" font-weight="800" fill="#ffffff">{initials}</text>
+  <text x="320" y="586" text-anchor="middle" font-family="Arial, sans-serif" font-size="32" font-weight="700" fill="#6d5a8d">{name}</text>
+</svg>"""
+    return Response(content=svg, media_type="image/svg+xml")
 
 
 @app.get("/api/reference-profile/{challenge_id}")
@@ -264,7 +314,11 @@ def reference_graph(challenge_id: str):
 
 
 @app.post("/api/analyze")
-async def analyze(challenge_id: str = Form(...), file: UploadFile = File(...)):
+async def analyze(
+    challenge_id: str = Form(...),
+    file: UploadFile = File(...),
+    fast: bool = True,
+):
     challenge = require_challenge(challenge_id)
     suffix = os.path.splitext(file.filename or "")[1].lower() or ".wav"
     if suffix not in {".wav", ".aiff", ".aif", ".flac", ".ogg"}:
@@ -278,7 +332,7 @@ async def analyze(challenge_id: str = Form(...), file: UploadFile = File(...)):
         content = await file.read()
         tmp.write(content)
         tmp.close()
-        return analyze_audio_file(challenge, tmp_path)
+        return analyze_audio_file(challenge, tmp_path, fast=fast)
     except HTTPException:
         raise
     except Exception as exc:
